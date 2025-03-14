@@ -22,7 +22,7 @@ int mysystem(const char *command)
 	pid_t pid;
 	if ((pid = fork) == 0)
 	{
-		execv(exec_args);
+		execv(exec_args[0],exec_args);
 	}
 	else{
 
