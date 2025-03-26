@@ -7,10 +7,11 @@
 int mysystem(const char *command)
 {
 
-	int ret = -1;
+	int ret = 1;
 	char *exec_args[20];
 	char *string, *cmd, *tofree;
 	int i = 0;
+	int status;
 	tofree = cmd = strdup(command);
 	while ((string = strsep(&cmd, " ")) != NULL)
 	{
@@ -20,13 +21,19 @@ int mysystem(const char *command)
 	exec_args[i] = NULL;
 
 	pid_t pid;
-	if ((pid = fork) == 0)
+	if ((pid = fork()) == 0)
 	{
-		execv(exec_args[0],exec_args);
+		execvp(exec_args[0], exec_args);
+		_exit(1);
 	}
-	else{
-
+	else
+	{
+		wait(&status);
+		ret = WEXITSTATUS(status);
+		//if (WEXITSTATUS(status) == 1)
+		//	ret = -1;
 	}
+	free(tofree);
 
 	return ret;
 }
