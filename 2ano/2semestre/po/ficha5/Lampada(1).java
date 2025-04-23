@@ -143,7 +143,7 @@ public class Lampada
         return consumoTotal;
     }
 
-    private void atualizaConsumo() {
+    public void atualizaConsumo() {
         long periodo = System.currentTimeMillis() - stamp;
 
         if(this.modo == Modo.ON) {
