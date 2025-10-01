@@ -173,26 +173,59 @@ int ex4()
     if ((pid = fork()) == 0)
     {
         close(fd[1]);
-        dup2(fd[0],0);
+        dup2(fd[0], 0);
         close(fd[0]);
-        execlp("wc","wc",NULL);
+        execlp("wc", "wc", NULL);
         _exit(0);
     }
     else
     {
-    close(fd[0]);
-    ssize_t bytes_read;
-    char buffer[1024];
-    while((bytes_read=read(0,&buffer,1024))>0){
-        write(fd[1],&buffer,bytes_read);
-    }    
-    close(fd[1]);
+        close(fd[0]);
+        ssize_t bytes_read;
+        char buffer[1024];
+        while ((bytes_read = read(0, &buffer, 1024)) > 0)
+        {
+            write(fd[1], &buffer, bytes_read);
+        }
+        close(fd[1]);
     }
     wait(NULL);
     return 0;
 }
 
+//
+int ex5()
+{
+    pid_t pid;
+    int fd[2];
+    if (pipe (fd)==-1){
+        perror("nao abre cao\n");
+    }
+    int originalfdout=dup(1);
+    if((pid=fork())==0){
+        close(fd[0]);
+        dup2(fd[1],1);
+        close(fd[1]);
+        execlp("ls","ls","/etc",NULL);
+        _exit(1);
+    }
+    
+    if((pid=fork())==0){
+        close(fd[1]);
+        dup2(fd[0],0);
+        close(fd[0]);
+        execlp("wc","wc","-l",NULL);
+        _exit(1);
+    }
+    close(fd[0]);
+    close(fd[1]);
+    wait(NULL);
+    wait(NULL);
+    return 0;
+
+}
+
 int main(void)
 {
-    ex4();
+    ex5();
 }

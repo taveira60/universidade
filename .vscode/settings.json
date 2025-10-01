@@ -3,5 +3,7 @@
         "stdio.h": "c",
         "unistd.h": "c",
         "matrix.h": "c"
-    }
+    },
+    "notebook.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
 }
