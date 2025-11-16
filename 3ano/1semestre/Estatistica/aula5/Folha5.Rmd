@@ -139,7 +139,7 @@ plot(mod)
 ```
 
 3.2. Se necessário, proponha **transformações** (por ex., `log(body_mass_g)` ou padronizar os preditores). Ajuste o modelo transformado e compare AIC, BIC e R² ajustado.
-
+pro
 ```{r penguins-transform}
 
 ```

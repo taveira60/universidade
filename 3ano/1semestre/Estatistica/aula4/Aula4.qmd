@@ -4,10 +4,9 @@ author: "Soraia Pereira"
 lang: pt
 date: today
 format:
-  revealjs:
-    theme: [default, simple]
-    slide-number: true
-    code-overflow: wrap
+  pdf:
+    toc: true
+    number-sections: true
 execute:
   echo: true
   warning: false

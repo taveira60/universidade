@@ -133,6 +133,31 @@ predict(modelo,newdata=data.frame(carat=1.0),interval="prediction")
 ```{r ex3}
 gm <- gapminder |> filter(year == 2007)
 # seu código aqui
+#1
+ggplot(gm,aes(gdpPercap,lifeExp))+
+    geom_point(alpha=0.7)+
+    scale_x_log10()+
+    geom_smooth(method = lm,formula = y~log(x),se=TRUE)+
+    labs(x="PIB per capita(log10 no eixo",y="Esperança media de vida")
+#2
+m_lin<- lm(lifeExp~gdpPercap,data=gm)
+m_log<- lm(lifeExp~log(gdpPercap),data=gm)
+
+bind_rows(
+  glance(m_lin)|>mutate(modelo="lifeExp~gdpPercap"),
+  glance(m_log)|>mutate(modelo="lifeExp~log(gdpPercap)")
+)|>
+  select(modelo,r.squared,adj.r.squared,sigma,AIC,BIC)
+
+#3
+tidy(m_log, conf.int = TRUE)
+# No modelo lifeExp~log(gdpPercap),um aumento proporcional do PIB esta associado a um aumento aditivo na esperança de vida de magnitude igual ao declive em termos praticos dorbra o PIB per capita esta associado a 4.99 anos a mais de vida em media.
+#4
+augment(m_log)|>
+  ggplot(aes(.fitted,.resid))+
+  geom_hline(yintercept=0,linetype=2)+
+  geom_point(alpha=0.7)+
+  labs(x="ajustados",y="residuos",title="residuosvsajudstados")
 ```
 
 
@@ -150,8 +175,37 @@ gm <- gapminder |> filter(year == 2007)
 
 
 ```{r ex4}
-fl <- flights |> drop_na(dep_delay, distance)
+fl <- flights |> drop_na(dep_delay, distance)|>
+  filter(between(dep_delay, -30, 300)) |>
+  group_by(month) |>
+  slice_sample(prop = 0.1) |>
+  ungroup()
 # seu código aqui
+#1 e 2
+ggplot(fl,aes(distance,dep_delay))+
+  geom_point(alpha=0.3)+
+  geom_smooth(method = "lm",se=TRUE)
+m_dep<-lm(dep_delay~distance,data=fl)
+summary(m_dep)
+tidy(m_dep, conf.int = TRUE)
+#Interpretaçao:O declive indica o aumento medio de atraso por milha adicional.Em geral, o efeito tende a ser pequeno
+#3
+aug<- augment(m_dep)
+cutoff<-4/nrow(fl)
+
+aug|> arrange(desc(.cooksd))|>slice_head(n=5)
+
+i_max<-which.max(aug$.cooksd)
+fl2<-fl[-i_max,]
+m_dep2<-lm(dep_delay~distance,data=fl2)
+
+blind_rows(
+  tidy(m_dep)|>mutate(modelo="com todos"),
+  tidy(m_dep2)|>mutate(modelo="sem o mais influente")
+)|>
+  filter(term=="distance")
+#4
+#Interpretação textual. Usar apenas distance ignora clima, horário, companhia, aeroporto, conexão, congestionamento etc. A variância residual alta sugere necessidade de mais preditores ou ou outros modelos.
 ```
 
 
@@ -165,6 +219,7 @@ fl <- flights |> drop_na(dep_delay, distance)
 2. Para cada nível, ajuste `price ~ carat` e compare as inclinações.  
 3. Comente diferenças substanciais e possíveis explicações (qualidade, mercado, etc.).  
 4. Verifique diagnóstico de resíduos em cada subgrupo.
+
 
 
 ```{r ex5}

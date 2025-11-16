@@ -1,0 +1,311 @@
+---
+title: "Exame Modelo — EDA, Regressão Linear e Regularização (2 horas)"
+author: 'Nome do/a aluno/a: __________________'
+date: "`r format(Sys.Date(), '%d-%m-%Y')`"
+output:
+  pdf_document: default
+  html_document: null
+editor_options:
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 7, fig.height = 4.6)
+set.seed(123)
+```
+
+# Instruções
+
+* **Duração:** 2 horas.
+* **Entregar:** este `.Rmd` com **código** e **respostas** (texto + figuras).
+* **Dados usados:** `gapminder`, `babynames`, `ggplot2::diamonds`, `ISLR2::Hitters`.
+
+```{r pacotes}
+# Instalar se necessário
+req <- c("tidyverse","broom","gapminder","babynames","glmnet","ISLR2","GGally","scales","janitor")
+new <- setdiff(req, rownames(installed.packages()))
+if(length(new)) install.packages(new)
+
+library(tidyverse)
+library(broom)
+library(gapminder)
+library(babynames)
+library(glmnet)
+library(ISLR2)
+library(GGally)
+library(scales)
+library(janitor)
+library(rsample)
+library(Metrics)
+```
+
+---
+
+# Parte A — EDA & Visualização
+
+## A1. Gapminder: padrões globais
+
+**Dados:** `gapminder::gapminder`.
+
+```{r A1-data}
+gp <- gapminder::gapminder |> janitor::clean_names()
+glimpse(gp)
+```
+
+**a)** Crie um **gráfico de dispersão** de `life_exp` vs `gdp_per_cap` para todos os anos, com:
+
+* eixo do PIB em **escala log10** (`scale_x_log10()`),
+* **transparência** (ex.: `alpha = 0.3`) para reduzir sobreposição,
+* **facet por continente**,
+* **linha de tendência** simples (`geom_smooth(se = FALSE)`).
+  *Explique tendências gerais e diferenças por continente.*
+
+```{r A1a}
+# Seu código aqui
+ggplot(gp,aes(x=gdp_percap,y=life_exp))+
+  geom_point(alpha=0.3)+
+  scale_x_log10()+
+  geom_smooth(se=FALSE)+
+  facet_wrap(~continent)
+```
+
+**b)** Escolha **3 países** de **continentes distintos** e faça um **gráfico de linhas ao longo do tempo** para `life_exp` (com pontos nos anos observados).
+*Comente a evolução comparada.*
+
+```{r A1b}
+# Seu código aqui
+dados<-gp|>filter(country %in% c("Portugal","Brazil","China"))
+
+ggplot(dados,aes(x=year,y=life_exp,color=country))+
+  geom_line()
+```
+
+**c)** Para o ano **2007**, compare as distribuições de `life_exp` por continente usando **boxplot**.
+*Comente níveis típicos e dispersão por continente.*
+
+```{r A1c}
+# Seu código aqui
+dados2<-gp|>filter(year==2007)
+ggplot(dados2,aes(x=continent,y=life_exp,color=continent))+
+  geom_boxplot()
+```
+
+
+---
+
+## A2. Babynames: diversidade de nomes
+
+**Dados:** `babynames::babynames`.
+
+```{r A2-data}
+bb <- babynames::babynames |> janitor::clean_names()
+glimpse(bb)
+```
+
+**a)** Escolha **5 nomes** (de ambos os sexos) e faça **séries temporais** (1900–2015) de `prop` por `year`, com **facets por nome** e **linhas suaves**.
+*Descreva um padrão.*
+
+```{r A2a}
+# Seu código aqui
+dados3<-bb|>filter(name %in% c("Mary","Ida","Owen","Anna","Emma"),year>=1900,year<=2015)
+ggplot(dados3,aes(x=year,y=prop))+
+  geom_line()+
+  facet_wrap(~name)+
+  geom_smooth(se=FALSE)
+```
+
+**b)** Para um sexo à escolha (`sex` = "F" ou "M"), construa um **diagrama de barras** para os 5 **nomes** mais comuns.
+*Indique um padrão temporal.*
+
+```{r A2b}
+# Seu código aqui
+sex_F<-bb|>filter(sex=="F")|>
+  group_by(name)|>
+  summarise(total=mean(prop))|>
+  arrange(desc(total)) |>
+  head(5)#perguntar
+View(sex_F)
+
+ggplot(sex_F,aes(x=name,y=total))+geom_bar(stat="identity",fill="black")
+```
+
+
+---
+
+# Parte B — Regressão Linear
+
+## B1. Diamonds: preço e características 
+
+**Dados:** `ggplot2::diamonds`. Objetivo: prever `log(price)`.
+
+```{r B1-data}
+data("diamonds", package = "ggplot2")
+dm <- diamonds |> janitor::clean_names() |> mutate(log_price = log(price))
+
+```
+
+**a)** Ajuste o modelo base:
+$$
+\log(\text{price}) \sim \text{carat} + \text{cut} + \text{color} + \text{clarity}.
+$$
+*Reporte **RMSE** e **R²** em treino e teste.*
+
+```{r B1a}
+# Seu código aqui
+split<-initial_split(dm,0.8)
+treino<-training(split)
+teste<-testing(split)
+
+#dim(treino)
+#dim(teste)
+
+mod<-lm(log_price~carat+cut+color+clarity,data=treino)
+summary(mod)$r.squared
+
+pred_mod<-predict(mod,newdata = teste,interval = "prediction")
+
+rmse_mod<-Metrics::rmse(teste$log_price,pred_mod)
+rmse_mod
+
+
+
+
+```
+
+**b)** Adicione a **interação** `carat:clarity`.
+*Compare **AIC** e **R² ajustado** com o modelo base e discuta o **trade-off complexidade vs ajuste**.*
+
+```{r B1b}
+# Seu código aqui
+mod2<-lm(log_price~carat*clarity+cut+color,data=treino)
+
+AIC(mod,mod2)
+summary(mod)$adj.r.squared
+summary(mod2)$adj.r.squared
+```
+
+**c)** Faça **diagnóstico visual** (resíduos vs ajustados, QQ-plot, *scale-location*).
+*Identifique 2 problemas potenciais.*
+
+```{r B1c}
+# Seu código aqui
+plot(mod,which = 1)
+plot(mod,which = 2)
+
+plot(mod2,which = 1)
+plot(mod2,which = 2)
+```
+
+**d)** Produza um **efeito parcial**: curvas previstas de `log(price)` vs `carat` para **3 níveis de `clarity`** (fixe `cut` e `color` em categorias comuns). Inclua **IC 95%** com `geom_ribbon`.
+*Comente.*
+
+```{r B1d}
+# Seu código aquiNAO VAI PEDIR COMPLEXO
+#grid_teste <- teste |>
+#summarise(cut=cut[1], color = color[1]) |>
+#crossing(carat = seq(min(teste$carat), max(teste$carat), length.out = 10788))
+
+#bind_cols(grid_teste, as_tibble(pred_mod), tibble(lwr_pred = pred_mod[,3], upr_pred = pred_mod[,3])) |> head()
+
+#pred_df <- bind_cols(grid_teste, as_tibble(pred_mod)) |>
+#rename(fit=fit, lwr=lwr, upr=upr)
+
+#ggplot(pred_df, aes(carat, fit,color=clarity)) +
+#geom_ribbon(aes(ymin=lwr, ymax=upr), alpha=.2) +
+#geom_line(linewidth=1) 
+#labs(x="Massa (kg)", y="mpg (média prevista)",
+#title="Efeito marginal de wt_kg com IC da média (95%) — p e am fixos")
+```
+
+**e)** **Interprete** dois coeficientes do melhor modelo (um coeficiente de uma variável contínua e um coeficiente de uma variável categórica), indicando unidades/escala e implicação no **preço**.
+*Resposta textual abaixo.*
+
+**Interpretação (B1e):**
+*Escreva aqui.*
+
+---
+
+# Parte C — Regularização: Ridge e Lasso
+
+## C1. Hitters (ISLR2): salários no basebol
+
+**Dados:** `ISLR2::Hitters`. Resposta: `log(Salary)`. Remova linhas com `NA` em `Salary`.
+
+```{r C1-data}
+ht <- as_tibble(ISLR2::Hitters) |> janitor::clean_names() |> drop_na(salary) |>
+  mutate(log_salary = log(salary))
+
+```
+
+**a)** Ajuste **Ridge** com `cv.glmnet(..., nfolds = 10)`.
+*Indique o `lambda.min` e o **RMSE de teste** (na escala de `log_salary`).*
+
+```{r C1a}
+# Seu código aqui
+split2<-initial_split(ht,0.8)
+test<-testing(split2)
+train<-training(split2)
+
+X_treino<-model.matrix(log_salary~.,train)[,-1]
+X_test<-model.matrix(log_salary~.,test)[,-1]
+
+Y_treino<-train$log_salary
+Y_test<-test$log_salary
+
+mod_rigde_cv<-cv.glmnet(x=X_treino,y=Y_treino,alpha=0,nfolds=10)
+summary(mod_rigde_cv)
+pred_ridge<-predict(mod_rigde_cv,s="lambda.min",newx = X_test)
+rmse_ridge<-Metrics::rmse(Y_test,predicted = pred_ridge)
+
+mod_rigde_cv$lambda.min
+rmse_ridge
+
+```
+
+**b)** Ajuste **Lasso** com *cross-validation*.
+*Indique `lambda.min`, e **RMSE de teste** para ambos.*
+
+```{r C1b}
+# Seu código aqui
+mod_lasso_cv<-cv.glmnet(x=X_treino,y=Y_treino,alpha=1,nfolds=10)
+summary(mod_lasso_cv)
+pred_lasso<-predict(mod_lasso_cv,s="lambda.min",newx = X_test)
+rmse_lasso<-Metrics::rmse(Y_test,predicted = pred_lasso)
+
+mod_lasso_cv$lambda.min
+rmse_lasso
+```
+
+**c)** Liste as **variáveis selecionadas** com o Lasso (com base no lambda.min).
+
+```{r C1c}
+# Seu código aqui
+coef_lasso<-coef(mod_lasso_cv,s="lambda.min")
+
+coef_df<-data.frame(
+  term=row.names(coef_lasso),
+  estimate=as.numeric(coef_lasso)
+)|>
+  dplyr::filter(estimate!=0)
+
+coef_df
+
+
+```
+
+**d)** Compare **OLS vs Ridge vs Lasso** (use o mesmo *split*).
+*Discuta **viés–variância**, **colinearidade** e **parcimónia**.
+
+```{r C1d}
+# Seu código aqui
+modelo_Ols<-lm(log_salary~.,ht)
+pred_osl<-predict(modelo_Ols,interval="prediction",ht)
+rmse_osl<-Metrics::rmse(Y_test,pred_osl)
+
+tibble(
+  Modelo = c("OLS", "Ridge", "Lasso"),
+  RMSE = c(rmse_osl, rmse_ridge, rmse_lasso),
+  Lambda = c(NA, mod_rigde_cv$lambda.min, mod_lasso_cv$lambda.min)
+)
+```
+

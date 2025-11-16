@@ -1,0 +1,13 @@
+    p1:abertura->(Raiz
+    p3:Raiz->int node node)
+    p4:     |)
+    p5:node-> ), Raiz   
+    nao ll1
+
+    --------------------------------------
+
+    p1:ABin-> ( Acont 
+    p2:Acont-> )
+    p3:      |Int ABin ABin )
+
+    ll1
