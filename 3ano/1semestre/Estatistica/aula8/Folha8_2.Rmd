@@ -1,0 +1,317 @@
+---
+title: "Exercícios de Regressão Logística"
+author: ""
+output: html_document
+fontsize: 11pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Exercício 1 – Probabilidade de doença em função do tabagismo
+
+Um estudo simples em saúde pública pretendeu perceber a relação entre **tabagismo** e uma determinada **doença respiratória crónica**. Foi recolhida informação sobre 300 indivíduos, guardada no ficheiro `saude_fumadores.csv`, com as seguintes variáveis:
+
+* `doenca` – variável binária:
+
+  * `1` se o indivíduo tem a doença respiratória crónica;
+  * `0` caso contrário.
+* `fumador` – variável binária:
+
+  * `1` se o indivíduo é fumador atual;
+  * `0` se não é fumador atual.
+* `idade` – idade do indivíduo (em anos).
+* `sexo` – variável categórica com dois níveis: `"F"` e `"M"`.
+
+Pretende-se ajustar um **modelo de regressão logística** para estudar a associação entre tabagismo e doença respiratória, controlando o efeito da idade.
+
+## 1.1 Importação e exploração inicial
+
+1. Leia o ficheiro `saude_fumadores.csv` para R e faça uma breve inspeção dos dados.
+
+```{r exercicio1-importacao}
+View(saude_fumadores)
+```
+
+2. Produza algumas tabelas e gráficos exploratórios simples, por exemplo:
+
+   * tabela de frequências de `doenca` e `fumador`;
+   * gráfico de barras cruzando `doenca` e `fumador`;
+   * boxplot de `idade` por `doenca`.
+
+Comente **pelo menos duas observações** interessantes (por exemplo, se a doença parece mais frequente em fumadores, se os doentes são em média mais velhos, etc.).
+
+```{r exercicio1-exploracao}
+library(ggplot2)
+ggplot(saude_fumadores,aes(x=fumador,y=doenca))+geom_bar(stat = "identity")
+
+table(saude_fumadores$fumador,saude_fumadores$doenca)
+
+ggplot(saude_fumadores,aes(x=doenca,y=idade))+geom_boxplot(fill= "red")
+```
+
+## 1.2 Modelo de regressão logística simples
+
+3. Comece por ajustar um modelo de regressão logística com:
+
+$$
+\text{Resposta: }\texttt{doenca}, \quad \text{Covariável: }\texttt{fumador}
+$$
+
+isto é, um modelo com **apenas uma covariável** (`fumador`).
+
+```{r exercicio1-logistico-simples}
+modelo<-glm(doenca~fumador,data = saude_fumadores,family = binomial(link="logit"))
+summary(modelo)
+```
+
+4. Interprete:
+
+   a) O **sinal** do coeficiente associado a `fumador`.
+   b) O **p-valor** associado a esse coeficiente.
+   
+   o que isto quer dizer e que fumar aumenta o risco de doenças , o valor p quer dizer que e 0.026 e a probabilidade de mostrar que tem um impacto relativamente alto uma vez que 2,6%e apenas a probabilidade de ter uma doença por causas naturaris.
+
+   Com base nessa informação, discuta se existe evidência estatística de associação entre tabagismo e doença respiratória. 
+
+5. Calcule a **odds ratio** associada à variável `fumador` (fumadores vs. não fumadores) usando o coeficiente do modelo.
+   Interprete em linguagem simples.
+
+```{r exercicio1-oddsratio}
+
+exp(coef(modelo))
+
+#Um fumador tem cerca de 2.4 vezes maior odds de ter a doença comparado com um não fumador, segundo este modelo.
+
+```
+
+## 1.3 Modelo de regressão logística múltipla
+
+6. Ajuste agora um modelo mais completo, incluindo a idade:
+
+$$
+\texttt{doenca} \sim \texttt{fumador} + \texttt{idade}
+$$
+
+```{r exercicio1-logistico-multiplo}
+
+modelo2<-glm(doenca ~ fumador + idade,data = saude_fumadores,family = binomial(link="logit"))
+summary(modelo2)
+summary(modelo)
+```
+
+7. Compare os modelos `mod1` e `mod2`:
+
+   a) Comente se o coeficiente de `fumador` mudou muito ao incluir a variável `idade`.
+   b) Discuta o que significa, em termos de interpretação, “o efeito de ser fumador **ajustado** à idade”.
+   
+O coeficiente de fumador aumentou ao incluir a idade e possivel ver nos valor estimate e ver nos valores do pvaleu que diminui  o que mostra que fica mais significativa.
+
+8. Usando o modelo `mod2`, calcule a probabilidade prevista de ter a doença para os seguintes perfis:
+
+   * Perfil A: não fumador, 30 anos;
+   * Perfil B: fumador, 30 anos;
+   * Perfil C: não fumador, 60 anos;
+   * Perfil D: fumador, 60 anos.
+
+```{r exercicio1-probabilidades}
+
+novos_perf <- data.frame(
+  fumador = c(0, 1, 0, 1),   
+  idade   = c(30, 30, 60, 60)
+)
+
+novos_perf
+
+probabilidades <- predict(modelo2, newdata = novos_perf, type = "response")
+
+novos_perf$prob_doenca <- probabilidades
+novos_perf
+
+```
+
+Comente os resultados: em que medida a idade e o tabagismo contribuem para aumentar a probabilidade de doença?
+
+como e possivel ver na tabela nos podemos ver que com base na idade quanto mais ela aumenta e com base se e fumador ou nao ele 
+## 1.4 Avaliação simples do modelo
+
+9. A partir do modelo `mod2`, obtenha as probabilidades previstas para todos os indivíduos na amostra e transforme-as em **previsões 0/1**, usando um ponto de corte de 0.5.
+```{r}
+
+probabilidades <- predict(modelo2, type = "response")
+
+cona <- ifelse(probabilidades >= 0.5, 1, 0)
+
+cona
+
+```
+10. Construa a **matriz de confusão** e calcule a **proporção de classificações corretas** (acerto global). Comente se considera este valor razoável, tendo em conta o contexto.
+
+```{r exercicio1-avaliacao}
+#??
+```
+
+11. (Questão conceptual) Discuta uma **limitação** de usar apenas o ponto de corte 0.5 e a percentagem de acerto para avaliar um modelo de regressão logística (por exemplo, em situações em que a doença é rara).
+
+---
+
+# Exercício 2 – Aprovação de alunos em função dos hábitos de estudo
+
+Numa disciplina de Estatística, foi recolhida informação sobre 200 alunos, guardada no ficheiro `alunos_aprovacao.csv`. As variáveis são:
+
+* `aprovado` – variável binária:
+
+  * `1` se o aluno foi aprovado na disciplina;
+  * `0` se foi reprovado.
+* `horas_estudo` – número médio de horas de estudo por semana.
+* `frequencia_aulas` – percentagem de aulas assistidas (entre 0 e 100).
+* `trabalhador` – variável binária:
+
+  * `1` se o aluno trabalha em part-time;
+  * `0` caso contrário.
+* `media_secundario` – média final (0–20) obtida no ensino secundário.
+
+Pretende-se ajustar modelos de regressão logística para estudar os fatores associados à aprovação.
+
+## 2.1 Importação e exploração dos dados
+
+1. Leia o ficheiro `alunos_aprovacao.csv` e faça uma breve exploração descritiva:
+
+   * tabelas de frequências para `aprovado` e `trabalhador`;
+   * estatísticas resumo para `horas_estudo`, `frequencia_aulas` e `media_secundario`;
+   * um ou dois gráficos sugeridos por si (por exemplo, boxplot de `horas_estudo` por `aprovado`).
+
+```{r exercicio2-importacao}
+aprovados <- table(alunos_aprovacao$aprovado)
+trabalhadors <- table(alunos_aprovacao$trabalhador)
+
+summary(alunos_aprovacao[,c("horas_estudo", 
+                         "frequencia_aulas", 
+                         "media_secundario")])
+
+ggplot(alunos_aprovacao, aes(x=factor(aprovado), y = horas_estudo, fill = aprovado))+
+         geom_boxplot(color = "red")
+```
+
+Comente **duas observações** sobre o comportamento dos alunos (por exemplo, se os aprovados tendem a estudar mais, se há grandes diferenças na frequência às aulas, etc.).
+
+## 2.2 Modelo logístico com múltiplas covariáveis
+
+2. Ajuste um modelo de regressão logística com:
+
+$$
+\texttt{aprovado} \sim \texttt{horas_estudo} + \texttt{frequencia_aulas} + \texttt{trabalhador}
+$$
+
+```{r exercicio2-logistico1}
+mod <- glm(aprovado~horas_estudo+frequencia_aulas+trabalhador, data = alunos_aprovacao,family = binomial(link = "logit"))
+summary(mod)
+```
+
+3. Interprete:
+
+   a) Os sinais dos coeficientes de `horas_estudo` e `frequencia_aulas`.
+   b) Os respetivos p-valores.
+
+   Com base nisso, discuta se estes fatores parecem estar associados à probabilidade de aprovação.
+
+4. Calcule e interprete a **odds ratio** para a variável `trabalhador`:
+
+   * `trabalhador = 1` vs. `trabalhador = 0`,
+     mantendo constantes as restantes variáveis.
+
+```{r exercicio2-oddsratio-trabalhador}
+x <- coef(mod)["trabalhador"]
+exp(x)
+```
+
+Comente se trabalhar em part-time parece estar associado a maior ou menor probabilidade de aprovação.
+
+## 2.3 Inclusão da média do secundário
+
+5. Ajuste agora um modelo mais completo com todas as covariáveis:
+
+$$
+\texttt{aprovado} \sim \texttt{horas_estudo} + \texttt{frequencia_aulas} + \texttt{trabalhador} + \texttt{media_secundario}
+$$
+
+```{r exercicio2-logistico2}
+mod <- glm(aprovado~horas_estudo+frequencia_aulas+trabalhador+media_secundario, data = alunos_aprovacao,family = binomial(link = "logit"))
+summary(mod)
+```
+
+6. Compare `mod_alunos1` e `mod_alunos2`:
+
+   a) Comente se a inclusão de `media_secundario` altera o coeficiente (e/ou significância) de alguma das outras variáveis.
+   b) Discuta o que significa, neste contexto, interpretar o efeito de `horas_estudo` **ajustado** à média do secundário.
+
+## 2.4 Probabilidades previstas para perfis de alunos
+
+7. Usando o modelo `mod_alunos2`, calcule as probabilidades previstas de aprovação para os seguintes perfis:
+
+   * Perfil 1: `horas_estudo = 2`, `frequencia_aulas = 60`, `trabalhador = 1`, `media_secundario = 12`.
+   * Perfil 2: `horas_estudo = 8`, `frequencia_aulas = 90`, `trabalhador = 0`, `media_secundario = 12`.
+   * Perfil 3: `horas_estudo = 5`, `frequencia_aulas = 80`, `trabalhador = 0`, `media_secundario = 17`.
+
+```{r exercicio2-probabilidades}
+perfil1 <- data.frame(
+  horas_estudo = 2,
+  frequencia_aulas = 60,
+  trabalhador = 1,
+  media_secundario = 12
+)
+
+perfil2 <- data.frame(
+  horas_estudo = 8,
+  frequencia_aulas = 90,
+  trabalhador = 0,
+  media_secundario = 12
+)
+
+perfil3 <- data.frame(
+  horas_estudo = 5,
+  frequencia_aulas = 80,
+  trabalhador  = 0,
+  media_secundario = 17
+)
+
+pred_p1 <- predict(mod, newdata = perfil1, type = "response")
+
+pred_p2 <- predict(mod, newdata = perfil2, type = "response")
+
+pred_p3 <- predict(mod, newdata = perfil3, type = "response")
+
+pred_p1
+pred_p2
+pred_p3
+```
+
+Comente os resultados, discutindo:
+
+* o impacto das horas de estudo e da frequência às aulas;
+* o papel da média do secundário;
+* se faz sentido que alunos com melhor média no secundário tenham, em geral, maior probabilidade de aprovação.
+
+## 2.5 Avaliação e pensamento crítico
+
+8. Obtenha as probabilidades previstas de aprovação para todos os alunos e construa uma matriz de confusão usando o ponto de corte 0.5. Calcule a proporção de classificações corretas.
+
+```{r exercicio2-avaliacao}
+prob_previstas <- predict(mod, type = "response")
+
+pred_01 <- ifelse(prob_previstas>=0.5,1,0)
+
+
+cm <- table(Real = alunos_aprovacao$aprovado, Previsto = pred_01)
+
+cm
+```
+
+9. Discuta, em texto, as seguintes questões:
+
+   a) A taxa de acerto parece satisfatória? Porquê?
+   b) O modelo está a errar mais frequentemente nos aprovados ou nos reprovados? Que implicações isso poderia ter em termos de decisão (por exemplo, identificar alunos em risco)?
+   c) Sugira **uma alteração possível** ao modelo ou à forma como é avaliado (por exemplo, considerar outro ponto de corte, incluir uma interação, recolher uma nova variável) e justifique por que poderia ser útil.
+

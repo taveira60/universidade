@@ -78,12 +78,37 @@ prob_teste <- predict(
   newdata = teste,
   type = "response"
 )
+summary(prob_teste)
 
+tabla <- ifelse(prob_teste >= 0.5, "vivo", "moto")
+cm <-table(Real = teste$Survived, Predito = tabla)
+cm
 
+TP <- cm["1","vivo"]
+FN <- cm["1","moto"]
+FP <- cm["0","vivo"]
+TN <- cm["0","moto"]
+
+accuracy <- (TP+TN)/sum(cm)
+sensibilidade  <- TP / (TP + FN)
+especificidade <- TN / (TN + FP)
+sensibilidade
+accuracy
 ```
 4. Com a package `pROC`, obtenha a **curva ROC** e a **AUC**.  
    Interprete a AUC.
+```{r}
+library(pROC)
 
+roc_obj <- roc(teste$Survived, prob_teste)
+plot(roc_obj, main = "Curva ROC - modelo transmissão manual",xlab = "1 - Specificity (FPR)",
+     ylab = "Sensitivity (TPR)")
+
+auc(roc_obj)
+
+
+
+```
 ---
 
 # -------------------------------------------------------------
@@ -92,16 +117,29 @@ prob_teste <- predict(
 ```{r E2-dados, eval=FALSE}
 library(ISLR2)
 dados_default <- Default
+
 ```
 
 Considere modelar a probabilidade de **incumprimento** (default = "Yes").
 
 1. Crie $Y = 1$ se `default="Yes"`, $Y=0$ caso contrário.  
    Explique por que a regressão logística é adequada (e a regressão linear não).
-
+```{r}
+dados_default$Y<-ifelse(dados_default$default=="Yes",1,0)
+table(dados_default$Y)
+```
 2. Divida os dados em **treino (60%)** e **teste (40%)**.  
    Compare a proporção de incumpridores nos dois conjuntos.
+```{r}
 
+split<-initial_split(dados_default,prop = 0.6)
+treino<-training(split)
+teste<-testing(split)
+
+prop_traino <- mean(treino$Y)
+prop_teste <- mean(teste$Y)
+
+```
 3. Ajuste o modelo:
 
 $$
@@ -119,15 +157,40 @@ $$
    - o sinal de $\beta_1$ (saldo),
    - o efeito de ser estudante ($\beta_3$),
    - o significado de $\exp(\beta_1)$ e $\exp(\beta_3)$ como *odds ratios*.
-
+```{r}
+modelo1 <- glm(Y ~ balance + income + student , data = treino,
+               family = binomial(link = "logit"))
+summary(modelo1)
+```
 4. Usando o modelo, calcule previsões no **teste** com threshold $t=0.5$ e obtenha:  
    - matriz de confusão,  
    - sensibilidade,  
    - especificidade.  
    Comente tendo em conta o risco financeiro de falsos negativos.
+```{r}
+pred<-predict(modelo1, newdata = teste,type= "response")
+xd <- ifelse(pred >= 0.5, "deve", "nao deve")
+cm <- table(Real = teste$Y, Predito = xd)
 
+TP <- cm["1","deve"]
+FN <- cm["1","nao deve"]
+FP <- cm["0","deve"]
+TN <- cm["0","nao deve"]
+
+accuracy <- (TP+TN)/sum(cm)
+sensibilidade  <- TP / (TP + FN)
+especificidade <- TN / (TN + FP)
+sensibilidade
+accuracy
+```
 5. Produza a curva ROC, AUC e determine um threshold ótimo pelo **índice de Youden**.  
    Compare o desempenho entre $t=0.5$ e o threshold ótimo.
+```{r}
+roc_obj <- roc(teste$Y, pred)
+plot(roc_obj, main = "Curva ROC - modelo transmissão manual",xlab = "1 - Specificity (FPR)",
+     ylab = "Sensitivity (TPR)")
 
+auc(roc_obj)
+```
 ---
 

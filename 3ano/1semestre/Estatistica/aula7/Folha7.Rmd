@@ -1,0 +1,168 @@
+---
+title: "Análise de Componentes Principais (ACP)"
+author: ""
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+ #   toc: true
+  #  toc_depth: 2
+  #  number_sections: true
+  pdf_document:
+  #  toc: true
+   # number_sections: true
+lang: pt
+fontsize: 11pt
+geometry: margin=2.5cm
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+set.seed(123)
+```
+
+
+# Exercício 1 — NCI60 (expressão génica; p ≈ 6.830)
+
+**Dados**: `ISLR2::NCI60` (64 linhas = linhas celulares; ~6.830 genes como variáveis).
+
+1. Use a library `ISLR2` e obtenha a matriz `NCI60$data`. Quantas variáveis (genes) existem? Há valores em falta?
+2. Construa `X <- scale(NCI60$data)` (centrar e padronizar por coluna). Justifique a escolha de **correlações** em vez de **covariâncias** neste contexto.
+3. Aplique `prcomp` a `X` (não volte a padronizar dentro de `prcomp`). Extraia **valores próprios**, **PVE** e **PVE acumulada**. Faça o **scree plot** e o gráfico da PVE acumulada.
+4. Faça um gráfico **CP1 vs CP2** dos *scores*. Use `NCI60$labs` apenas para **colorir** os pontos por tipo de cancro (não entra na ACP). Comente padrões/separações.
+5. Identifique os **25 genes** com maiores |loadings| em **CP1** e em **CP2** (duas listas). Discuta se há sobreposição entre as listas.
+
+```{r E1}
+library(ISLR2)
+library(ggplot2)
+#1
+X<- NCI60$data
+
+ncol(X)
+
+sum(is.na(X))
+
+#2
+
+Y <- scale(X)
+
+cov(Y)
+range(apply(NCI60$data, 2, sd))
+
+#3
+pc<- prcomp(Y,center = FALSE,scale.=FALSE)
+
+summary(pc)
+
+
+#4
+
+scores <- as.data.frame(pc$x)
+scores$tipo <- as.factor(NCI60$labs)
+
+ggplot(scores,aes(x=PC1,y=PC2,color = tipo))+geom_point(size=2)
+
+#No gráfico CP1 vs CP2 observam-se grupos bem separados como LEUKEMIA e MELANOMA, enquanto outros tipos de cancro apresentam sobreposição, indicando perfis génicos menos distintos nestas duas componentes.
+
+#5 ?? perguntar quinta
+loadings <- pc$rotation
+abs_loadings <- abs(loadings)
+
+topCP1 <- order(abs_loadings[,1],decreasing = TRUE)[1:25]
+topCP2 <- order(abs_loadings[,2],decreasing = TRUE)[1:25]
+
+genes_CP1 <- row
+
+```
+
+---
+
+# Exercício 2 — Sonar (sinais; p = 60)
+
+**Dados**: `mlbench::Sonar` (208 amostras, 60 variáveis de energia em bandas de frequência; classe M/R usada **apenas** para visualização).
+
+1. Carregue `mlbench` e prepare `X <- scale(as.matrix(Sonar[, 1:60]))`. Guarde o vetor de classes `y <- Sonar$Class`.
+2. Aplique ACP a `X`. Reporte **PVE** e **PVE acumulada**; produza o **scree plot**.
+3. Faça um gráfico **CP1 vs CP2** com pontos coloridos por `y`. Comente se há **separação** entre M (mine) e R (rock).
+4. Mostre um **biplot** (atenção à escala visual). Quais as **5 variáveis** com maior |loading| em CP1 e CP2?
+
+```{r E2}
+library(mlbench)
+data(Sonar)
+
+#1
+X <- scale(as.matrix(Sonar[, 1:60]))
+y <- Sonar$Class
+
+#2
+
+corr<-prcomp(X,center = FALSE ,scale.=FALSE)
+summary(corr)
+screeplot(corr)
+
+#3
+scores <- corr$x
+
+ggplot(scores,aes(x=PC1,y=PC2,color=y))+geom_point(size=3,alpha=0.8)
+
+#4
+
+biplot(corr,choices=c(1, 2),scale=0)
+
+sort(abs(corr$rotation[,1]),decreasing = TRUE)|>head(5)
+sort(abs(corr$rotation[,2]),decreasing = TRUE)|>head(5)
+#Perguntar a professora a separaçao r e m
+
+
+
+```
+
+---
+
+# Exercício 3 — Espectroscopia NIR (*yarn*; p ≈ 268 comprimentos de onda)
+
+**Dados**: `pls::yarn`. Tem espectros NIR (muitas variáveis) e respostas químicas (ex.: `density`). Use **apenas** os **espectros** para ACP.
+
+1. Carregue `pls` e examine `yarn`. Construa a matriz `X <- scale(yarn$NIR)` com padronização por coluna.
+2. Aplique ACP a `X`. Reporte **valores próprios**, **PVE** e **PVE acumulada**. Produza os gráficos correspondentes.
+3. Faça **scores plots** (CP1 vs CP2, e CP2 vs CP3). Procure padrões (e.g., batches/lotes se disponíveis).
+4. Identifique **intervalos de onda** com maiores contribuições (|loadings| altos) para CP1 e CP2. Discuta possível interpretação.
+
+```{r E3}
+library(pls)
+#1
+X <- scale(yarn$NIR)
+
+#2
+corr<-prcomp(X,center = FALSE ,scale.=FALSE)
+summary(corr)
+
+valpr<-corr$sdev^2
+PVE<-valpr/sum(valpr)
+PVE_acum<-cumsum(PVE)
+valpr
+PVE
+PVE_acum
+
+screeplot(corr)
+
+qplot(y = cpve3, x = seq_along(cpve3), geom = c("line","point")) +
+  labs(x = "Componente", y = "PVE acumulada", title = "yarn — PVE acumulada") +
+  theme_minimal()
+#3
+scores <- corr$x
+
+ggplot(scores,aes(x=PC1,y=PC2))+geom_point(size=3,alpha=0.8)
+
+ggplot(scores,aes(x=PC3,y=PC4))+geom_point(size=3,alpha=0.8)
+
+#4
+sort(abs(corr$rotation[,1]),decreasing = TRUE)|>head(5)
+sort(abs(corr$rotation[,2]),decreasing = TRUE)|>head(5)
+#Perguntar a professora a separaçao r e m
+
+
+```
+
+---
