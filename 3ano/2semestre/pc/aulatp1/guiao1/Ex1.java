@@ -1,5 +1,3 @@
-
-
 class Printer extends Thread{
     
     int I;

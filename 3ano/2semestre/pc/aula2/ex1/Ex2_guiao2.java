@@ -1,10 +1,10 @@
 class Contador{
     private int value=0;
-    public void increment(){
+    public synchronized void increment(){
         value+=1;
     }
 
-    public int value(){
+    public synchronized int value(){
         return value;
     }
 
@@ -29,7 +29,7 @@ class Incrementer extends Thread{
     }
 }
 
-public class Ex2 {
+public class Ex2_guiao2 {
     public static void main(String[] args) throws  InterruptedException {
         final int N = Integer.parseInt(args[0]);
         final int I = Integer.parseInt(args[1]);
