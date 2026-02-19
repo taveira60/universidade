@@ -1,4 +1,4 @@
-package aulatp1.treino;
+package aula1.treino;
 
 class MyThread extends Thread { // more easy
     @Override
