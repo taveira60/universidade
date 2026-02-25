@@ -1,0 +1,28 @@
+                Load Dataset
+                     |
+                     |
+                     |
+                     v
+                EDA/Prepocessing
+                     |
+                     |
+                     |
+                     v
+                spliting
+                     |
+                     |
+                     |
+                     v
+                --------------------------------
+                |                              |
+                |                              |
+                v                              v
+             Tainset/scaling                Training set scaling
+                |                                |
+                |                                |
+                v                                |
+            Cv/Qt Hup / fit                      |   
+                |                                |
+                |                                |
+                v                                |   
+            model fitted--------------------------

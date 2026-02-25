@@ -164,17 +164,23 @@ class Bank {
         l.lock();
         try {
             for (int i : ids) {
-                Account c = map.get(i);
-                if (c == null)
+                if (map.get(i) == null)
                     return 0;
+            }
+            for (int i : ids) {
+                Account c = map.get(i);
                 c.lokki.lock();
-                total += c.balance();
-                c.lokki.unlock();
+                try {
+                    total += c.balance();
+
+                } finally {
+                    c.lokki.unlock();
+                }
             }
         } finally {
             l.unlock();
         }
+
         return total;
     }
-
 }
