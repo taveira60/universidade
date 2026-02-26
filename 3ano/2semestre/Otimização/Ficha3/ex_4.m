@@ -28,7 +28,7 @@ for i =1:n
     for j =1:dim
         A= hessxs(1:j, 1:j);
         d(j) = det(A);
-
+        
         if d(1) > 0
         fprintf('Classificação: MÍNIMO LOCAL\n');
         elseif d(1) < 0
@@ -36,6 +36,7 @@ for i =1:n
         else
         fprintf('Classificação: INCONCLUSIVO\n');
         end
+        disp(d)
 
     end
     fprintf('determinantes das submatrizes principais\n')
