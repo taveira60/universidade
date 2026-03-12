@@ -12,10 +12,16 @@ gradF = gradient(F,[w1 w2]);
 Fk = subs(F,[w1,w2],wk);
 gradFk = subs(gradF, [w1,w2], wk);
 
-eta = eta0;
+eta = eta0;,
 vals = []
 while (subs(F, [w1,w2],(wk + eta*sk)) > Fk+c*eta*gradFk*sk)
     eta = rho * eta;
     vals = [vals;[eta subs(F, [w1,w2],(wk + eta*sk))]];
 end
 fprintf('O eta que verifica a condição de Armijo é : '); disp(eta)
+
+etas = linspace(0,1.2,100);
+w=wk+etas.*sk;
+w1=w(1,:);
+w2=w(2,:);
+
