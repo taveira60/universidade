@@ -1,0 +1,8 @@
+clear,clc,closeall;
+
+
+path(path,'problemas')
+
+options=optimoptions('fminunc','Display','iter','SpecifyObjectiveGradient',true);
+
+w0=[-1.2;1];
