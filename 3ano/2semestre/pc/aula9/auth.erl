@@ -1,4 +1,4 @@
--module(ex1).
+-module(auth).
 -export([create_account/2, close_account/2, login/2, logout/1, online/0]).
 % funções de interface
 
