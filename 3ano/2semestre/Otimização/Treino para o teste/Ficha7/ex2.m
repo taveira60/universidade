@@ -14,15 +14,17 @@ gradl=gradient(L,[w1 w2 w3 y1])
 
 vec=[0;0;0;0]
 
+
 [ws1 ws2 ws3 ys1]=solve(gradl==vec)
 
 hessw_l=hessian(L,[w1 w2 w3])
 
 Z=null(grad_c1')
 
+Z
+
 h_num = subs(hessw_l, [w1, w2, w3, y1], [ws1(1), ws2(1), ws3(1), ys1(1)]);
 
-% Agora calcula o Hessiano Reduzido com valores numéricos
 H_red = double(Z' * h_num * Z)
 
 

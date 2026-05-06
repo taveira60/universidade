@@ -5,7 +5,7 @@ function [f_opt,w_opt,output] = MDM(Fwithgrad,w0,epsilon,kmax)
     while k < kmax
         [f_k, grad_k] = Fwithgrad(wk);
         norma=norm(grad_k,inf);
-        while norma<=epsilon
+        if norma<=epsilon
             output=[output; k wk' Fk gradk' eta norma];
             break
         end

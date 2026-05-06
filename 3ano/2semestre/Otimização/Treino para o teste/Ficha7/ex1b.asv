@@ -1,0 +1,21 @@
+clc , clear;
+
+syms w1 w2 w3 y1
+
+F=(w1^2)-(2*w1)+((w2^2)-(w3^2))+(4*w3)
+
+c1= w1 - w2 + 2*w3 - 2
+
+L= F - y1*c1
+
+c1_subs=subs(c1,[w1 w2 w3], [2.5 -1.5 -1])
+
+c1_grad=gradient(c1,[w1 w2 w3])
+
+gradl=gradient(L,[w1 w2 w3])
+
+gradl_subs= subs(gradl,[w1 w2 w3 y1],[2.5 -1.5 -1])
+
+vec=[0;0;0;0]
+
+lambda=solve(gradl_subs==vec)
