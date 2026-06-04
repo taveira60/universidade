@@ -1,4 +1,4 @@
-function [f, gradf] = funHS6(w)
+function [f, gradf] = HS6(w)
     % Cria as variáveis simbólicas (Requer Symbolic Math Toolbox)
     syms w1 w2
     
@@ -14,6 +14,6 @@ function [f, gradf] = funHS6(w)
     f = double(subs(fun, {w1, w2}, {w(1), w(2)}));
     
         % Converte o gradiente simbólico em um vetor double de coluna
-        res_grad = subs(grad, {w1, w2}, {w(1), w(2)});
-        gradf = double(res_grad);
+    res_grad = subs(grad, {w1, w2}, {w(1), w(2)});
+    gradf = double(res_grad);
 end

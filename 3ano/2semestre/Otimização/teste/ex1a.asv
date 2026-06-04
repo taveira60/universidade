@@ -1,0 +1,15 @@
+function [w_opt,q_opt,violation,output] = ex1a(penaltyQ,w0,mu0)
+
+options=optimoptions('fminunc','iter');
+
+toll=1e-6;
+tol=1e-6;
+mu=mu0;
+kmax=100;
+ws=w0;
+output=[];
+tau=1/mu;
+
+options.Optimalitytolerance = tau;
+
+[w_opt,q_opt,exitflag,output,gradq]=fminunc(@penaltyQ(u,mu),w0)
